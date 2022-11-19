@@ -72,6 +72,7 @@ def get_start(map):
 def solve(labyrinth,exit_pos,pos,steps,removed):
 	if pos not in steps and pos not in removed:
 		steps.append(pos)
+	
 
 	if pos == exit_pos:
 		return True
@@ -87,17 +88,29 @@ def solve(labyrinth,exit_pos,pos,steps,removed):
 
 	if solve(labyrinth,exit_pos,pos,steps,removed):
 		return True
+
 	else:
 		new_pos = pos
+		print('pos:',pos,'possibilities:',possibilities,'\nsteps before:',steps)
 		if len(possibilities)>1:
 			for p in possibilities:
 				if p not in steps and p not in removed:
 					new_pos = p
+
 			steps.remove(pos)
-			solve(labyrinth,exit_pos,new_pos,steps,removed)
+			print('steps after:',steps)
+			if new_pos != pos:
+				solve(labyrinth,exit_pos,new_pos,steps,removed)
+
+			else:
+				return False
+
 		else:
 			steps.remove(pos)
+			print('steps after:',steps)
+
 			return False
+
 
 def next_step(labyrinth,raw,col,steps,exit_pos):
 	possibilities = []

@@ -111,7 +111,6 @@ def remove_blanks(expression):
 	return expression
 
 def open_brackets(expression):
-
 	for index in range(len(expression)-1,0,-1):
 		if expression[index][0] == '(':
 			return index

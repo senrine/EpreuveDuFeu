@@ -19,26 +19,58 @@ def getMap(file):
 			if elm != '\n':
 				mapLine.append(elm)
 		map.append(mapLine)
+	setWidth(map)
+	setChar(map)
+	setHeight(map)
 	return map
 
-def setWidth():
+def isInt(num):
+	try:
+		int(num)
+		return True
+	except ValueError:
+		return False
+
+def setWidth(map):
 	global width
-	width = 10
+	width = ''
+	for index in range(len(map[0])):
+		if map[0][index]=='x':
+			i = index+1
+			while isInt(map[0][i]):
+				width = width + map[0][i]
+				i+=1
+			break
+	try:
+		width = int(width)
+	except:
+		print("=> Erreur")
+		exit()
 
-def setHeight():
+def setHeight(map):
 	global height
-	height = 10
+	height = ''
+	for index in range(len(map[0])):
+		if map[0][index]=='x':
+			break
+		elif isInt(map[0][index]):
+			height = height + map[0][index]
+	try:
+		height = int(height)
+	except:
+		print("=> Erreur")
+		exit()
 
-def setChar():
+def setChar(map):
 	global charachters
-	charachters = ['*',' ','o','1','2']
-
-setWidth()
-setChar()
-setHeight()
+	try:
+		charachters = map[0][-5:]
+	except:
+		print("=> Erreur")
+		exit()
 
 def get_exits(map):
-	exit = []
+	exits = []
 	for raw in range(1,len(map)):
 		pos = []
 		for col in range(len(map[raw])):
@@ -46,11 +78,21 @@ def get_exits(map):
 				pos.append(raw)
 				pos.append(col)
 		if len(pos)>0:
-			exit.append(pos)
-	if len(exit)>0:
-		return exit
+			exits.append(pos)
+	if len(exits)>0:
+		return exits
 	else:
 		print("=> Erreur: pas de sorties !")
+		exit()
+
+def checkMap(map):
+	if len(map)==height+1:
+		for index in range(1,len(map)):
+			if len(map[index])!= width:
+				print('=> Erreur')
+				exit()
+	else:
+		print("=> Erreur")
 		exit()
 
 def get_start(map):
@@ -69,54 +111,57 @@ def get_start(map):
 		print("=> Erreur: pas d'entrées !")
 		exit()
 
-def solve(labyrinth,exit_pos,pos,steps,removed):
-	if pos not in steps and pos not in removed:
-		steps.append(pos)
-	
+def solve(labyrinth,exit,start):
+	trys = []
+	for exit_pos in exit:
+		for start_pos in start:
+			steps = []
+			removed = []
+			pos = start_pos
+			steps.append(pos)
+		
+			while pos != exit_pos:
+				if pos not in steps:
+					steps.append(pos)
+		
+				possibilities = next_step(labyrinth,pos[0],pos[1],steps,exit_pos)
+				pos = best_step(labyrinth,possibilities,exit_pos,steps)
+		
+				if pos!=steps[-1]:
+					steps.append(pos)
+		
+				elif pos == exit_pos:
+					break
+		
+				elif pos == steps[-1]:
+					removed.append(pos)
+					pos = resolve(labyrinth,steps,removed,exit_pos)
+			trys.append(steps)
 
-	if pos == exit_pos:
-		return True
+	print_best_try(labyrinth,trys)
 
-	possibilities = next_step(labyrinth,pos[0],pos[1],steps,exit_pos)
-	pos = best_step(labyrinth,possibilities,exit_pos,steps)
+def resolve(labyrinth,steps,removed,exit_pos):
+	index = len(steps) - 1
+	while index >=0:
+		pos = steps[index]
 
-	if pos == steps[-1]:
+		possibilities = next_step(labyrinth,pos[0],pos[1],steps,exit_pos)
+
+		for p in possibilities:
+
+			if p not in steps and p not in removed:
+				return p
+				index +=1
+
+		steps.remove(pos)
 		removed.append(pos)
-		return False
-
-	steps.append(pos)
-
-	if solve(labyrinth,exit_pos,pos,steps,removed):
-		return True
-
-	else:
-		new_pos = pos
-		print('pos:',pos,'possibilities:',possibilities,'\nsteps before:',steps)
-		if len(possibilities)>1:
-			for p in possibilities:
-				if p not in steps and p not in removed:
-					new_pos = p
-
-			steps.remove(pos)
-			print('steps after:',steps)
-			if new_pos != pos:
-				solve(labyrinth,exit_pos,new_pos,steps,removed)
-
-			else:
-				return False
-
-		else:
-			steps.remove(pos)
-			print('steps after:',steps)
-
-			return False
-
+		index-=1
 
 def next_step(labyrinth,raw,col,steps,exit_pos):
 	possibilities = []
 
 	if [raw,col] == exit_pos:
-		return exit_pos
+		return [exit_pos]
 
 	for x,y in [(raw+1,col),(raw-1,col),(raw,col+1),(raw,col-1)]:
 		if (x>=0 and x<height 
@@ -164,28 +209,30 @@ def bad_step(labyrinth,raw,col,steps,exit_pos):
 
 	return bad
 
+def print_best_try(labyrinth,trys):
+	short_path = trys[0]
+	for index in range(1,len(trys)):
+		if len(trys[index]) < len(short_path):
+			short_path = trys[index]
+	
+	for pos in short_path[1:-1]:
+		labyrinth[pos[0]][pos[1]] = charachters[-3]
 
-map2=['10x10* o12\n',
-'*****2****\n',
-'* *   ****\n',
-'*    *** *\n',
-'* **  ****\n',
-'*  *******\n',
-'* **     2\n',
-'*    *   *\n',
-'*    **  *\n',
-'1  *******\n',
-'**********\n']
+	for line in labyrinth:
+		for elm in line:
+			print(elm,end='')
+		print('\t')
 
-map2 = getMap(map2)
-start = get_start(map2)
-exit = get_exits(map2)
+	print(f'=> SORTIE ATTEINTE EN {len(short_path)-2} COUPS')
 
+with open(sys.argv[1],'r') as f:
+	lines = f.readlines()
+labyrinth = getMap(lines)
+checkMap(labyrinth)
+start = get_start(labyrinth)
+exit = get_exits(labyrinth)
 steps = []
 removed = []
-steps.append(start[0])
 
-solve(map2,exit[0],start[0],steps,removed)
+solve(labyrinth,exit,start)
 
-print(steps)
-print(removed)

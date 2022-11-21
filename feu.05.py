@@ -113,10 +113,17 @@ def get_start(map):
 
 def solve(labyrinth,exit,start):
 	trys = []
+
 	for exit_pos in exit:
+		steps = []
+		removed = []
+		if bad_step(labyrinth,exit_pos[0],exit_pos[1],steps):
+			continue
+
 		for start_pos in start:
-			steps = []
-			removed = []
+
+			if bad_step(labyrinth,start_pos[0],start_pos[1],steps):
+				continue
 			pos = start_pos
 			steps.append(pos)
 		
@@ -137,8 +144,10 @@ def solve(labyrinth,exit,start):
 					removed.append(pos)
 					pos = resolve(labyrinth,steps,removed,exit_pos)
 			trys.append(steps)
-
-	print_best_try(labyrinth,trys)
+	if len(trys) !=0:
+		print_best_try(labyrinth,trys)
+	else:
+		print("=> Erreur")
 
 def resolve(labyrinth,steps,removed,exit_pos):
 	index = len(steps) - 1
@@ -188,11 +197,8 @@ def best_step(labyrinth,possibilities,exit_pos,steps):
 
 	return best
 
-def bad_step(labyrinth,raw,col,steps,exit_pos):
+def bad_step(labyrinth,raw,col,steps):
 	bad = True
-
-	if [raw,col] == exit_pos:
-		return False
 
 	if raw-1>0:
 		if [raw-1,col] not in steps and labyrinth[raw-1][col] != charachters[0]:
@@ -231,8 +237,4 @@ labyrinth = getMap(lines)
 checkMap(labyrinth)
 start = get_start(labyrinth)
 exit = get_exits(labyrinth)
-steps = []
-removed = []
-
 solve(labyrinth,exit,start)
-
